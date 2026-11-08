@@ -10,3 +10,15 @@ nodevars.bat
 install_tools.bat
 New Text Document.txt
 *.log
+# Compiled Binaries & DLLs
+*.exe
+*.dll
+
+# Machine-Specific Shortcuts & Assets
+Shortcuts/
+*.ico
+
+# Duplicate Wrapper Scripts
+Kill.cmd
+Link.vbs
+menu.bat
