@@ -6,7 +6,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
-const WIZ_IP = '192.168.29.35';
+const WIZ_IP = '192.168.xx.xx';
 const WIZ_PORT = 38899;
 const CLEVO_TOOL = 'C:\\ClevoKB\\CLEVO_KeyboardColour.exe';
 
