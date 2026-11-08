@@ -217,6 +217,6 @@ app.get('/api/metrics', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n==================================================`);
   console.log(`  Master Lighting & Automation Server Active`);
-  console.log(`  Network Access: http://192.168.29.131:${PORT}`);
+  console.log(`  Network Access: http://192.168.xx.xx:${PORT}`);
   console.log(`==================================================\n`);
 });
