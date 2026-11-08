@@ -9,22 +9,22 @@ A lightweight, local-first IoT control ecosystem and PWA dashboard built to orch
 ![License](https://img.shields.io/badge/License-MIT-brightgreen)
 
 ---
-
 ## 🛠️ System Architecture
 
+```
 +--------------------------+          +-----------------------------------+
 |  Mobile PWA Controller   |  HTTP    |     Node.js Server (server.js)     |
 | (Galaxy S24 Ultra / Web) | -------> |  Express REST API & Static Server |
 +--------------------------+          +-----------------------------------+
-|
-+----------------------------------------------+----------------------------------------------+
-|                                              |                                              |
-v                                              v                                              v
+                                                        |
+         +----------------------------------------------+----------------------------------------------+
+         |                                              |                                              |
+         v                                              v                                              v
 +------------------+                          +-------------------+                          +--------------------+
 |  Philips WiZ UDP |                          | Windows WMI & CLI |                          | Clevo & Kreo Apps  |
 |  (Port: 38899)   |                          | Brightness & CPU  |                          | Per-Key RGB tools  |
 +------------------+                          +-------------------+                          +--------------------+
-
+```
 
 ---
 
@@ -43,7 +43,7 @@ v                                              v                                
 
 ## 📁 Repository Structure
 
-text
+```text
 ├── public/
 │   ├── index.html        # PWA interface with dark cyber-theme & live controls
 │   └── manifest.json     # PWA metadata for installation on mobile devices
@@ -52,4 +52,5 @@ text
 ├── start_tunnel.vbs      # Silent background startup script for local tunneling
 ├── package.json          # Node.js dependencies
 └── README.md             # Repository documentation
+```
 
