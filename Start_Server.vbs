@@ -1,0 +1,1 @@
+CreateObject("Wscript.Shell").Run "cmd /c cd /d C:\ClevoKB && node server.js", 0, False

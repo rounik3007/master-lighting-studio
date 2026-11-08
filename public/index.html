@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#090d16" />
+  <title>Master Lighting Studio</title>
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 26, 43, 0.65);
+      --card-border: rgba(0, 255, 255, 0.15);
+      --neon-cyan: #00ffff;
+      --neon-red: #ff2a6d;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; user-select: none; }
+    body { background: var(--bg); color: var(--text); font-family: sans-serif; min-height: 100vh; padding: 16px; padding-bottom: 40px; }
+    .header { text-align: center; margin-bottom: 14px; }
+    .header h1 { font-size: 1.3rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 2px; }
+
+    /* Section Headings */
+    .section-title { font-size: 0.75rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1.5px; margin: 16px 0 8px 4px; border-left: 2px solid var(--neon-cyan); padding-left: 6px; }
+
+    /* Metrics Bar */
+    .metrics-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
+    .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px; text-align: center; font-size: 0.75rem; color: var(--text-dim); }
+    .metric-card span { display: block; font-size: 0.9rem; color: var(--neon-cyan); font-weight: bold; margin-top: 2px; }
+
+    .vis-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 6px; }
+    .vis-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px; text-align: center; }
+    .vis-card label { display: block; font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+    .bulb-orb { width: 38px; height: 38px; border-radius: 50%; margin: 0 auto; background: #333; transition: all 0.3s ease; }
+    .kb-preview { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+    .kb-bar { width: 20px; height: 20px; border-radius: 4px; background: #222; }
+
+    /* Control Panels */
+    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-bottom: 6px; backdrop-filter: blur(10px); }
+    .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-dim); }
+    .control-row input[type="range"] { width: 65%; accent-color: var(--neon-cyan); }
+    .btn-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
+    .btn-control { background: rgba(0, 255, 255, 0.1); border: 1px solid var(--card-border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-control:active { background: rgba(0, 255, 255, 0.3); }
+
+    .hero-shutdown { background: linear-gradient(135deg, rgba(255, 42, 109, 0.2), rgba(15, 15, 25, 0.8)); border: 1px solid var(--neon-red); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 6px; }
+    .hero-shutdown h3 { font-size: 0.85rem; color: var(--neon-red); }
+    .hero-shutdown p { font-size: 0.65rem; color: var(--text-dim); }
+    .btn-shutdown { background: var(--neon-red); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 0.7rem; cursor: pointer; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 70px; cursor: pointer; }
+    .card:active { transform: scale(0.97); }
+    .card-num { font-size: 0.6rem; color: var(--text-dim); font-weight: bold; }
+    .card-title { font-size: 0.8rem; font-weight: 600; margin-top: 2px; }
+
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.9); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 8px 16px; border-radius: 30px; font-size: 0.75rem; transition: transform 0.3s ease; z-index: 1000; }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Lighting Studio</h1>
+  </div>
+
+  <!-- SECTION: SYSTEM TELEMETRY -->
+  <div class="section-title">System Metrics</div>
+  <div class="metrics-bar">
+    <div class="metric-card">CPU Core Load<span id="cpu-temp">-- %</span></div>
+    <div class="metric-card">GPU Status<span id="gpu-temp">Active</span></div>
+  </div>
+
+  <!-- SECTION: HARDWARE VISUALIZER -->
+  <div class="section-title">Hardware Sync Status</div>
+  <div class="vis-container">
+    <div class="vis-card"><label>WiZ Lamp</label><div id="bulb-orb" class="bulb-orb"></div></div>
+    <div class="vis-card"><label>Keyboard</label><div class="kb-preview"><div id="kb-1" class="kb-bar"></div><div id="kb-2" class="kb-bar"></div><div id="kb-3" class="kb-bar"></div></div></div>
+  </div>
+
+  <!-- SECTION: LAPTOP DISPLAY BRIGHTNESS -->
+  <div class="section-title">Laptop Display Brightness</div>
+  <div class="panel">
+    <div class="control-row">
+      <span id="brightness-label">Screen Brightness: 100%</span>
+      <input type="range" id="global-brightness-slider" min="0" max="100" value="100" oninput="adjustScreenBrightnessLive(this.value)">
+    </div>
+  </div>
+
+  <!-- KREO APP CONTROL SECTION -->
+  <div class="section-title">Kreo App Control</div>
+  <div class="panel">
+    <div class="btn-row">
+      <button class="btn-control" onclick="controlKreo('open')">📂 Open Kreo</button>
+      <button class="btn-control btn-danger" onclick="controlKreo('close')">❌ Close Kreo</button>
+    </div>
+  </div>
+
+  <!-- SECTION: QUICK AUTOMATIONS -->
+  <div class="section-title">Quick Automations</div>
+  <div class="panel">
+    <div class="btn-row">
+      <button class="btn-control" onclick="triggerAutomation('valorant')">🎯 Valorant</button>
+      <button class="btn-control" onclick="triggerAutomation('obs')">🎥 OBS Studio</button>
+      <button class="btn-control" onclick="triggerAutomation('spotify')">🎧 Spotify</button>
+      <button class="btn-control" onclick="triggerAutomation('youtube')">▶️ YouTube</button>
+      <button class="btn-control" onclick="triggerAutomation('steam')">🎮 Steam</button>
+      <button class="btn-control" onclick="triggerAutomation('discord')">💬 Discord</button>
+      <button class="btn-control" onclick="triggerAutomation('explorer')">📁 Explorer</button>
+      <button class="btn-control" onclick="triggerAutomation('mute')">🔇 Sys Mute</button>
+      <button class="btn-control" onclick="triggerAutomation('mw4')">🎮 Modern Warfare 4</button>
+    </div>
+  </div>
+
+  <!-- SECTION: LIVE WIZ CONTROLS -->
+  <div class="section-title">WiZ Pro Controls</div>
+  <div class="panel">
+    <div class="control-row">
+      <span>WiZ Brightness</span>
+      <input type="range" id="dimming-slider" min="10" max="100" value="100" oninput="adjustWizLive()">
+    </div>
+    <div class="control-row">
+      <span>Warmth (Kelvin)</span>
+      <input type="range" id="temp-slider" min="2200" max="6500" step="100" value="2700" oninput="adjustWizTempLive()">
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn-control" style="flex:1;" onclick="sendWizRaw({method:'setState',params:{state:true}})">💡 ON</button>
+      <button class="btn-control" style="flex:1;" onclick="sendWizRaw({method:'setState',params:{state:false}})">🌙 OFF</button>
+      <input type="color" id="color-picker" style="flex:1;height:34px;background:none;border:none;cursor:pointer;" onchange="adjustWizColorLive(this.value)">
+    </div>
+  </div>
+
+  <!-- SECTION: SHUTDOWN BANNER -->
+  <div class="section-title">System Power</div>
+  <div class="hero-shutdown">
+    <div><h3>[35] Sleep & Shutdown</h3><p>30% Warm Lamp + Power Off</p></div>
+    <button class="btn-shutdown" onclick="triggerProfile(35)">SHUTDOWN</button>
+  </div>
+
+  <!-- SECTION: LIGHTING PROFILES GRID -->
+  <div class="section-title">Lighting Profiles (0-34)</div>
+  <div class="grid" id="profile-grid"></div>
+  <div id="toast">Command Sent</div>
+
+  <script>
+    const profiles = [
+      { id: 0,  title: "Blackout", color: "#333333", wiz: { method:"setState", params:{ state: false } }, clevo: "colour 000000", brightness: 0 },
+      { id: 1,  title: "Overdrive Red", color: "#ff0000", wiz: { method:"setPilot", params:{ r:255, g:0, b:0, dimming:100 } }, clevo: "colour ff0000" },
+      { id: 2,  title: "Sakura Pink", color: "#ff6ea8", wiz: { method:"setPilot", params:{ r:255, g:110, b:168, dimming:100 } }, clevo: "colour ff6ea8" },
+      { id: 3,  title: "Warm Amber", color: "#ff5500", wiz: { method:"setPilot", params:{ temp:2700, dimming:100 } }, clevo: "colour ff5500" },
+      { id: 4,  title: "Spectrum Wave", color: "#00ffff", wiz: { method:"setPilot", params:{ sceneId:4, dimming:100 } }, clevo: "theme colourtransform" },
+      { id: 5,  title: "Cyber Neon", color: "#00ffff", wiz: { method:"setPilot", params:{ r:0, g:255, b:255, dimming:100 } }, clevo: "colour 00ffff" },
+      { id: 6,  title: "Deep Purple", color: "#8800ff", wiz: { method:"setPilot", params:{ r:136, g:0, b:255, dimming:80 } }, clevo: "colour 8800ff" },
+      { id: 7,  title: "Emerald Matrix", color: "#00ff44", wiz: { method:"setPilot", params:{ r:0, g:255, b:68, dimming:100 } }, clevo: "colour 00ff44" },
+      { id: 8,  title: "Cozy Candlelight", color: "#ffaa00", wiz: { method:"setPilot", params:{ temp:2200, dimming:60 } }, clevo: "colour ffaa00" },
+      { id: 9,  title: "Sunset Gold", color: "#ff8800", wiz: { method:"setPilot", params:{ r:255, g:136, b:0, dimming:100 } }, clevo: "colour ff8800" },
+      { id: 10, title: "Deep Ocean", color: "#0044ff", wiz: { method:"setPilot", params:{ r:0, g:68, b:255, dimming:90 } }, clevo: "colour 0044ff" },
+      { id: 11, title: "Pure White Focus", color: "#ffffff", wiz: { method:"setPilot", params:{ temp:5000, dimming:100 } }, clevo: "colour ffffff" },
+      { id: 12, title: "Midnight Crimson", color: "#880000", wiz: { method:"setPilot", params:{ r:136, g:0, b:0, dimming:40 } }, clevo: "colour 880000" },
+      { id: 13, title: "Vaporwave", color: "#ff00ff", wiz: { method:"setPilot", params:{ r:255, g:0, b:255, dimming:100 } }, clevo: "colour 00ffff" },
+      { id: 14, title: "Solar Flare", color: "#ff3c00", wiz: { method:"setPilot", params:{ r:255, g:60, b:0, dimming:100 } }, clevo: "colour ff0000" },
+      { id: 15, title: "Breathing Amber", color: "#ffaa00", wiz: { method:"setPilot", params:{ temp:2700, dimming:100 } }, clevo: "theme tempo" },
+      { id: 16, title: "Emergency Strobe", color: "#ff0000", wiz: { method:"setPilot", params:{ sceneId:1, dimming:100 } }, clevo: "theme flash" },
+      { id: 17, title: "Arctic Cyan", color: "#00e5ff", wiz: { method:"setPilot", params:{ temp:6500, dimming:100 } }, clevo: "colour 00e5ff" },
+      { id: 18, title: "Acid Lime", color: "#bfff00", wiz: { method:"setPilot", params:{ r:191, g:255, b:0, dimming:100 } }, clevo: "colour bfff00" },
+      { id: 19, title: "Golden Hour", color: "#ffb432", wiz: { method:"setPilot", params:{ r:255, g:180, b:50, dimming:90 } }, clevo: "colour ff6a00" },
+      { id: 20, title: "Iceberg Cool", color: "#80d8ff", wiz: { method:"setPilot", params:{ r:180, g:235, b:255, dimming:80 } }, clevo: "colour 80d8ff" },
+      { id: 21, title: "Valorant Dual", color: "#ff4655", wiz: { method:"setPilot", params:{ r:255, g:70, b:85, dimming:100 } }, clevo: "colour 00d2ff" },
+      { id: 22, title: "Stealth Black", color: "#444444", wiz: { method:"setPilot", params:{ temp:2700, dimming:20 } }, clevo: "colour 000000" },
+      { id: 23, title: "Soft Lavender", color: "#e6e6fa", wiz: { method:"setPilot", params:{ r:216, g:191, b:216, dimming:85 } }, clevo: "colour e6e6fa" },
+      { id: 24, title: "Mint Green", color: "#98ff98", wiz: { method:"setPilot", params:{ r:152, g:251, b:152, dimming:90 } }, clevo: "colour 98ff98" },
+      { id: 25, title: "Twilight Indigo", color: "#4b0082", wiz: { method:"setPilot", params:{ r:75, g:0, b:130, dimming:75 } }, clevo: "colour 4b0082" },
+      { id: 26, title: "Bedtime 30-Min", color: "#ffaa00", wiz: { method:"setPilot", params:{ temp:2200, dimming:30 } }, clevo: "colour 000000" },
+      { id: 27, title: "Miami Vice", color: "#ff0080", wiz: { method:"setPilot", params:{ r:255, g:0, b:128, dimming:100 } }, clevo: "colour 00ffff" },
+      { id: 28, title: "Tokyo Drift", color: "#ff0055", wiz: { method:"setPilot", params:{ r:180, g:0, b:255, dimming:100 } }, clevo: "colour ff0055" },
+      { id: 29, title: "Northern Lights", color: "#00ff96", wiz: { method:"setPilot", params:{ r:0, g:255, b:150, dimming:90 } }, clevo: "colour 8800ff" },
+      { id: 30, title: "Electric Sunset", color: "#ff5500", wiz: { method:"setPilot", params:{ r:255, g:90, b:0, dimming:100 } }, clevo: "colour ff0088" },
+      { id: 31, title: "Deep Cosmos", color: "#14003c", wiz: { method:"setPilot", params:{ r:20, g:0, b:60, dimming:50 } }, clevo: "colour 0044ff" },
+      { id: 32, title: "Golden Eclipse", color: "#ffd700", wiz: { method:"setPilot", params:{ r:255, g:215, b:0, dimming:100 } }, clevo: "colour 330000" },
+      { id: 33, title: "Cyberpunk 2077", color: "#fff000", wiz: { method:"setPilot", params:{ r:255, g:240, b:0, dimming:100 } }, clevo: "colour 00ffff" },
+      { id: 34, title: "Fresh Air", color: "#00ffaa", wiz: { method:"setPilot", params:{ temp:4500, dimming:80 } }, clevo: "colour 00ffaa" }
+    ];
+
+    function renderGrid() {
+      const container = document.getElementById('profile-grid');
+      container.innerHTML = profiles.map(p => `
+        <div class="card" onclick="triggerProfile(${p.id})" style="border-color: ${p.color}44;">
+          <span class="card-num">[${p.id < 10 ? '0' + p.id : p.id}]</span>
+          <div class="card-title" style="color: ${p.color};">${p.title}</div>
+        </div>
+      `).join('');
+    }
+
+    async function triggerProfile(id) {
+      let payload = {};
+      if (id === 35) {
+        payload = {
+          wizPayload: { method: "setPilot", params: { temp: 2200, dimming: 30 } },
+          clevoArg: "colour 000000",
+          brightness: 10,
+          shutdown: true
+        };
+        updateVisualizer("#ff5500", "#000000");
+        document.getElementById('global-brightness-slider').value = 10;
+        document.getElementById('brightness-label').innerText = "Screen Brightness: 10% (Shutting down)";
+      } else {
+        const p = profiles.find(item => item.id === id);
+        if (!p) return;
+        payload = { wizPayload: p.wiz, clevoArg: p.clevo };
+        if (p.brightness !== undefined) {
+          payload.brightness = p.brightness;
+          document.getElementById('global-brightness-slider').value = p.brightness;
+          document.getElementById('brightness-label').innerText = `Screen Brightness: ${p.brightness}%`;
+        }
+        updateVisualizer(p.color, p.color);
+      }
+
+      showToast(`Activated Profile [${id}]`);
+      sendPayload('/api/profile', payload);
+    }
+
+    async function controlKreo(action) {
+      showToast(`Executing Kreo: ${action}...`);
+      try {
+        const res = await fetch(`/api/kreo-${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          showToast(`Kreo ${action} successful!`);
+        } else {
+          showToast(`Failed to ${action} Kreo`);
+        }
+      } catch (e) {
+        showToast("Network error controlling Kreo");
+      }
+    }
+
+    async function triggerAutomation(actionName) {
+      showToast(`Launching ${actionName}...`);
+      sendPayload('/api/automate', { action: actionName });
+    }
+
+    async function sendWizRaw(wizObj) {
+      showToast("Sending WiZ Command...");
+      sendPayload('/api/profile', { wizPayload: wizObj });
+    }
+
+    async function adjustWizLive() {
+      const dim = document.getElementById('dimming-slider').value;
+      sendPayload('/api/profile', { wizPayload: { method: "setPilot", params: { dimming: parseInt(dim) } } });
+    }
+
+    async function adjustWizTempLive() {
+      const temp = document.getElementById('temp-slider').value;
+      sendPayload('/api/profile', { wizPayload: { method: "setPilot", params: { temp: parseInt(temp), dimming: 100 } } });
+    }
+
+    async function adjustWizColorLive(hex) {
+      const r = parseInt(hex.substr(1,2), 16);
+      const g = parseInt(hex.substr(3,2), 16);
+      const b = parseInt(hex.substr(5,2), 16);
+      sendPayload('/api/profile', { wizPayload: { method: "setPilot", params: { r, g, b, dimming: 100 } } });
+      updateVisualizer(hex, hex);
+    }
+
+    // Standalone Brightness Slider Logic
+    async function adjustScreenBrightnessLive(val) {
+      document.getElementById('brightness-label').innerText = `Screen Brightness: ${val}%`;
+      try {
+        await fetch('/api/brightness', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brightness: parseInt(val) })
+        });
+      } catch (err) {
+        console.error("Error setting brightness");
+      }
+    }
+
+    async function fetchCurrentBrightness() {
+      try {
+        const res = await fetch('/api/brightness');
+        const data = await res.json();
+        const slider = document.getElementById('global-brightness-slider');
+        const label = document.getElementById('brightness-label');
+        
+        if (slider && label && data.brightness !== undefined) {
+          slider.value = data.brightness;
+          label.innerText = `Screen Brightness: ${data.brightness}%`;
+        }
+      } catch (err) {
+        console.error("Failed to fetch brightness on startup");
+      }
+    }
+
+    async function sendPayload(endpoint, payload) {
+      try {
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        showToast("Error sending command");
+      }
+    }
+
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        const data = await res.json();
+        document.getElementById('cpu-temp').innerText = data.cpu;
+      } catch (e) {}
+    }
+
+    function updateVisualizer(bulbHex, kbHex) {
+      const orb = document.getElementById('bulb-orb');
+      orb.style.background = bulbHex;
+      orb.style.boxShadow = `0 0 20px ${bulbHex}`;
+
+      ['kb-1', 'kb-2', 'kb-3'].forEach(id => {
+        const el = document.getElementById(id);
+        el.style.background = kbHex;
+        el.style.boxShadow = `0 0 10px ${kbHex}`;
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    renderGrid();
+    fetchCurrentBrightness();
+    setInterval(fetchMetrics, 5000);
+    fetchMetrics();
+  </script>
+</body>
+</html>

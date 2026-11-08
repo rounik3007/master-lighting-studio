@@ -1,0 +1,19 @@
+{
+  "name": "clevokb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dgram": "^1.0.1",
+    "express": "^5.3.0",
+    "npm": "^11.20.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
