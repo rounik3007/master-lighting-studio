@@ -3,7 +3,7 @@
 # Devices: Philips WiZ Lamp (192.168.29.35:38899) & Gigabyte G6 KF Keyboard
 # ==============================================================================
 
-$WizIP     = '192.168.29.35'
+$WizIP     = '192.168.xx.xx'
 $WizPort   = 38899
 $ClevoTool = 'C:\ClevoKB\CLEVO_KeyboardColour.exe'
 
