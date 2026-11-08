@@ -16,8 +16,6 @@ A lightweight, local-first IoT control ecosystem and PWA dashboard built to orch
 
 !\[License](https://img.shields.io/badge/License-MIT-brightgreen)
 
-
-
 \---
 
 
